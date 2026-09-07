@@ -37,7 +37,7 @@ class _ConnectScreenState extends State<ConnectScreen>
   // Live Auto-Discovery State
   final List<DiscoveredServer> _liveServers = [];
   bool _isScanning = false;
-  double _scanProgress = 0.0;
+  final ValueNotifier<double> _scanProgressNotifier = ValueNotifier<double>(0.0);
   StreamSubscription<DiscoveredServer>? _scanSubscription;
 
   late final AnimationController _pulseController;
@@ -77,7 +77,7 @@ class _ConnectScreenState extends State<ConnectScreen>
     setState(() {
       _liveServers.clear();
       _isScanning = true;
-      _scanProgress = 0.0;
+      _scanProgressNotifier.value = 0.0;
     });
 
     final ports = List<int>.from(NetworkDiscoveryService.commonPorts);
@@ -89,14 +89,22 @@ class _ConnectScreenState extends State<ConnectScreen>
       ports.insert(0, customPort);
     }
 
+    final priorityIps = <String>{};
+    final manualIp = _ipController.text.trim();
+    if (manualIp.isNotEmpty) {
+      priorityIps.add(manualIp);
+    }
+    for (final conn in _savedConnections) {
+      if (conn.ip.isNotEmpty) {
+        priorityIps.add(conn.ip);
+      }
+    }
+
     final stream = NetworkDiscoveryService.scanSubnet(
       ports: ports,
+      priorityIps: priorityIps.toList(),
       onProgress: (progress, currentIp) {
-        if (mounted) {
-          setState(() {
-            _scanProgress = progress;
-          });
-        }
+        _scanProgressNotifier.value = progress;
       },
     );
 
@@ -118,7 +126,7 @@ class _ConnectScreenState extends State<ConnectScreen>
         if (mounted) {
           setState(() {
             _isScanning = false;
-            _scanProgress = 1.0;
+            _scanProgressNotifier.value = 1.0;
           });
         }
       },
@@ -135,6 +143,7 @@ class _ConnectScreenState extends State<ConnectScreen>
   @override
   void dispose() {
     _pulseController.dispose();
+    _scanProgressNotifier.dispose();
     _scanSubscription?.cancel();
     _ipController.dispose();
     _portController.dispose();
@@ -565,11 +574,16 @@ class _ConnectScreenState extends State<ConnectScreen>
         bottom: _isScanning
             ? PreferredSize(
                 preferredSize: const Size.fromHeight(2),
-                child: LinearProgressIndicator(
-                  value: _scanProgress > 0 ? _scanProgress : null,
-                  minHeight: 2,
-                  backgroundColor: Colors.transparent,
-                  valueColor: AlwaysStoppedAnimation<Color>(fg),
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _scanProgressNotifier,
+                  builder: (context, progress, _) {
+                    return LinearProgressIndicator(
+                      value: progress > 0 ? progress : null,
+                      minHeight: 2,
+                      backgroundColor: Colors.transparent,
+                      valueColor: AlwaysStoppedAnimation<Color>(fg),
+                    );
+                  },
                 ),
               )
             : null,

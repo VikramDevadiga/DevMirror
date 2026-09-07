@@ -40,6 +40,12 @@ class DiscoveredServer {
   }
 }
 
+class _ProbeTask {
+  final String ip;
+  final int port;
+  const _ProbeTask(this.ip, this.port);
+}
+
 class NetworkDiscoveryService {
   static const List<int> commonPorts = [
     // Standard protocols
@@ -87,13 +93,33 @@ class NetworkDiscoveryService {
     9000, // Various development tools
   ];
 
-  /// Finds the device's local Wi-Fi IPv4 address
+  /// Finds the device's local Wi-Fi / Ethernet IPv4 address
   static Future<String?> getLocalDeviceIp() async {
     try {
       final interfaces = await NetworkInterface.list(
         type: InternetAddressType.IPv4,
         includeLinkLocal: false,
       );
+
+      // Sort interfaces: prioritize Wi-Fi/Ethernet/USB before cellular/VPN
+      interfaces.sort((a, b) {
+        final aName = a.name.toLowerCase();
+        final bName = b.name.toLowerCase();
+        final aIsWifi = aName.contains('wlan') ||
+            aName.contains('wifi') ||
+            aName.contains('eth') ||
+            aName.contains('rndis') ||
+            aName.contains('en');
+        final bIsWifi = bName.contains('wlan') ||
+            bName.contains('wifi') ||
+            bName.contains('eth') ||
+            bName.contains('rndis') ||
+            bName.contains('en');
+
+        if (aIsWifi && !bIsWifi) return -1;
+        if (!aIsWifi && bIsWifi) return 1;
+        return 0;
+      });
 
       for (final interface in interfaces) {
         for (final addr in interface.addresses) {
@@ -107,17 +133,19 @@ class NetworkDiscoveryService {
     return null;
   }
 
-  /// Probes a single IP and port quickly via TCP socket
+  /// Probes a single IP and port via TCP socket
   static Future<bool> probeSocket(
     String ip,
     int port, {
-    Duration timeout = const Duration(milliseconds: 300),
+    Duration timeout = const Duration(milliseconds: 500),
   }) async {
+    Socket? socket;
     try {
-      final socket = await Socket.connect(ip, port, timeout: timeout);
+      socket = await Socket.connect(ip, port, timeout: timeout);
       socket.destroy();
       return true;
     } catch (_) {
+      socket?.destroy();
       return false;
     }
   }
@@ -126,7 +154,7 @@ class NetworkDiscoveryService {
   static Future<String?> fetchHtmlTitle(
     String ip,
     int port, {
-    Duration timeout = const Duration(milliseconds: 1200),
+    Duration timeout = const Duration(milliseconds: 1000),
   }) async {
     try {
       final client = HttpClient()..connectionTimeout = timeout;
@@ -225,80 +253,157 @@ class NetworkDiscoveryService {
     }
   }
 
-  /// Scans the local subnet for active dev servers
+  /// Scans the local subnet for active dev servers using a smooth, non-blocking worker pool
   static Stream<DiscoveredServer> scanSubnet({
     List<int> ports = commonPorts,
+    List<String> priorityIps = const [],
     void Function(double progress, String currentIp)? onProgress,
-  }) async* {
-    final localIp = await getLocalDeviceIp();
-    if (localIp == null) return;
+  }) {
+    late final StreamController<DiscoveredServer> controller;
 
-    final parts = localIp.split('.');
-    if (parts.length != 4) return;
-
-    final subnetPrefix = '${parts[0]}.${parts[1]}.${parts[2]}';
-    final myHostNumber = int.tryParse(parts[3]) ?? 0;
-
-    // Scan priority order: neighboring IPs around the device's IP, then .1 - .254
-    final List<int> hostNumbers = [];
-
-    // Check nearest neighbors first (+/- 30 from device IP)
-    for (int offset = 1; offset <= 30; offset++) {
-      if (myHostNumber - offset >= 1) hostNumbers.add(myHostNumber - offset);
-      if (myHostNumber + offset <= 254) hostNumbers.add(myHostNumber + offset);
-    }
-
-    // Add remaining hosts in the subnet
-    for (int i = 1; i <= 254; i++) {
-      if (!hostNumbers.contains(i) && i != myHostNumber) {
-        hostNumbers.add(i);
-      }
-    }
-
-    // Scan in concurrent batches
-    const int batchSize = 15;
-    int scannedCount = 0;
-    final int totalToScan = hostNumbers.length;
-
-    for (int b = 0; b < hostNumbers.length; b += batchSize) {
-      final batch = hostNumbers.sublist(
-        b,
-        (b + batchSize > hostNumbers.length) ? hostNumbers.length : b + batchSize,
-      );
-
-      final List<Future<DiscoveredServer?>> futures = [];
-
-      for (final host in batch) {
-        final targetIp = '$subnetPrefix.$host';
-
-        for (final port in ports) {
-          futures.add(
-            probeSocket(targetIp, port).then((isOpen) async {
-              if (isOpen) {
-                // Port is open! Try fetching real HTML title
-                final title = await fetchHtmlTitle(targetIp, port);
-                return DiscoveredServer(
-                  ip: targetIp,
-                  port: port,
-                  serverType: _identifyServer(port),
-                  pageTitle: title,
-                );
+    controller = StreamController<DiscoveredServer>(
+      onListen: () async {
+        try {
+          final localIp = await getLocalDeviceIp();
+          if (localIp == null || controller.isClosed) {
+            // Still scan priority IPs if available (e.g. 127.0.0.1 or user-specified IP)
+            if (priorityIps.isNotEmpty && !controller.isClosed) {
+              for (final ip in priorityIps) {
+                for (final port in ports) {
+                  final isOpen = await probeSocket(ip, port);
+                  if (isOpen && !controller.isClosed) {
+                    controller.add(
+                      DiscoveredServer(
+                        ip: ip,
+                        port: port,
+                        serverType: _identifyServer(port),
+                      ),
+                    );
+                  }
+                }
               }
-              return null;
-            }),
-          );
-        }
-      }
+            }
+            if (!controller.isClosed) await controller.close();
+            return;
+          }
 
-      final results = await Future.wait(futures);
-      scannedCount += batch.length;
-      onProgress?.call(scannedCount / totalToScan, '$subnetPrefix.${batch.last}');
+          final parts = localIp.split('.');
+          if (parts.length != 4) {
+            if (!controller.isClosed) await controller.close();
+            return;
+          }
 
-      for (final res in results) {
-        if (res != null) {
-          yield res;
+          final subnetPrefix = '${parts[0]}.${parts[1]}.${parts[2]}';
+          final myHostNumber = int.tryParse(parts[3]) ?? 0;
+
+          // Priority 1: User's priority IPs (e.g. manually entered IP, saved servers, 127.0.0.1)
+          final List<String> targetIps = [];
+          for (final pip in priorityIps) {
+            if (pip.isNotEmpty && !targetIps.contains(pip)) {
+              targetIps.add(pip);
+            }
+          }
+
+          // Priority 2: Device's own IP & default gateway (.1)
+          if (myHostNumber >= 1 && myHostNumber <= 254) {
+            final myIp = '$subnetPrefix.$myHostNumber';
+            if (!targetIps.contains(myIp)) targetIps.add(myIp);
+          }
+          final gatewayIp = '$subnetPrefix.1';
+          if (!targetIps.contains(gatewayIp)) targetIps.add(gatewayIp);
+
+          // Priority 3: Immediate neighbors (+/- 30)
+          for (int offset = 1; offset <= 30; offset++) {
+            if (myHostNumber - offset >= 1) {
+              final ip = '$subnetPrefix.${myHostNumber - offset}';
+              if (!targetIps.contains(ip)) targetIps.add(ip);
+            }
+            if (myHostNumber + offset <= 254) {
+              final ip = '$subnetPrefix.${myHostNumber + offset}';
+              if (!targetIps.contains(ip)) targetIps.add(ip);
+            }
+          }
+
+          // Priority 4: Remainder of subnet (.2 to .254)
+          for (int i = 1; i <= 254; i++) {
+            final ip = '$subnetPrefix.$i';
+            if (!targetIps.contains(ip)) {
+              targetIps.add(ip);
+            }
+          }
+
+          // Build task queue
+          final List<_ProbeTask> tasks = [];
+          for (final ip in targetIps) {
+            for (final port in ports) {
+              tasks.add(_ProbeTask(ip, port));
+            }
+          }
+
+          final int totalTasks = tasks.length;
+          int completedTasks = 0;
+          DateTime lastProgressUpdate = DateTime.now();
+
+          // Controlled concurrency pool (35 concurrent socket workers)
+          const int concurrency = 35;
+          int currentTaskIndex = 0;
+
+          Future<void> worker() async {
+            while (currentTaskIndex < tasks.length && !controller.isClosed) {
+              final taskIndex = currentTaskIndex++;
+              if (taskIndex >= tasks.length) break;
+
+              final task = tasks[taskIndex];
+              final isOpen = await probeSocket(task.ip, task.port);
+
+              if (isOpen && !controller.isClosed) {
+                // Instantly emit discovered server with serverType in <10ms
+                final baseServer = DiscoveredServer(
+                  ip: task.ip,
+                  port: task.port,
+                  serverType: _identifyServer(task.port),
+                );
+                controller.add(baseServer);
+
+                // Fetch HTML title asynchronously without blocking the worker pool
+                fetchHtmlTitle(task.ip, task.port).then((title) {
+                  if (title != null && !controller.isClosed) {
+                    controller.add(baseServer.copyWith(pageTitle: title));
+                  }
+                }).catchError((_) {});
+              }
+
+              completedTasks++;
+
+              // Throttle progress updates to at most once per 100ms
+              final now = DateTime.now();
+              if (now.difference(lastProgressUpdate).inMilliseconds > 100 || completedTasks == totalTasks) {
+                lastProgressUpdate = now;
+                onProgress?.call(completedTasks / totalTasks, task.ip);
+              }
+
+              // Micro-yield to event loop
+              if (completedTasks % 35 == 0) {
+                await Future.delayed(Duration.zero);
+              }
+            }
+          }
+
+          final workers = List.generate(concurrency, (_) => worker());
+          await Future.wait(workers);
+
+          if (!controller.isClosed) {
+            onProgress?.call(1.0, '$subnetPrefix.$myHostNumber');
+            await controller.close();
+          }
+        } catch (_) {
+          if (!controller.isClosed) {
+            await controller.close();
+          }
         }
-      }
-    }
+      },
+    );
+
+    return controller.stream;
   }
 }
