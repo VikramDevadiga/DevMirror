@@ -42,19 +42,49 @@ class DiscoveredServer {
 
 class NetworkDiscoveryService {
   static const List<int> commonPorts = [
-    5500, // VS Code Live Server
-    5501, // VS Code Live Server #2
-    5173, // Vite
-    5174, // Vite #2
-    3000, // React / Next.js / Node
-    3001, // React / Next.js #2
-    8080, // Webpack / Vue / Spring
-    8081, // Metro / React Native / Webpack
-    8000, // Django / FastAPI / PHP
+    // Standard protocols
+    21, // FTP
+    22, // SSH
+    80, // HTTP
+    443, // HTTPS
+
+    // JavaScript / Node / React / Next.js
+    3000, // React / Node / Express / Next.js
+    3001, // React / Node alternative
+    3002, // Node / React alternative
+    4000, // Common Node / GraphQL
+
+    // Frontend Frameworks
     4200, // Angular
     5000, // Flask / ASP.NET
-    9000, // PHP-FPM / Webpack
-    8888, // Jupyter / Local Web
+    5001, // ASP.NET Core
+    5173, // Vite
+    5174, // Vite alternative
+
+    // Live Server / VS Code
+    5500, // VS Code Live Server
+    5501, // VS Code Live Server alternative
+    5502, // Live Server alternative
+
+    // Component & Storybook
+    6006, // Storybook
+
+    // Python / Backend / AI
+    8000, // Django / FastAPI / Python
+    8001, // Python / backend alternative
+    8002, // Python / backend alternative
+
+    // Webpack / Vue / Spring / Metro / Frontend Alternatives
+    8080, // Webpack / Vue / Spring Boot
+    8081, // Webpack / Metro
+    8082, // Frontend alternative
+    8083, // Frontend alternative
+    8084, // Frontend alternative
+    8085, // Frontend alternative
+
+    // Tools & Data Science
+    8888, // Jupyter Notebook
+    9000, // Various development tools
   ];
 
   /// Finds the device's local Wi-Fi IPv4 address
@@ -142,24 +172,54 @@ class NetworkDiscoveryService {
 
   static String _identifyServer(int port) {
     switch (port) {
+      case 21:
+        return 'FTP Server';
+      case 22:
+        return 'SSH Server';
+      case 80:
+        return 'HTTP Web Server';
+      case 443:
+        return 'HTTPS Web Server';
+      case 3000:
+        return 'React / Node / Next.js';
+      case 3001:
+      case 3002:
+        return 'Node / React';
+      case 4000:
+        return 'Node / GraphQL';
+      case 4200:
+        return 'Angular';
+      case 5000:
+        return 'Flask / ASP.NET';
+      case 5001:
+        return 'ASP.NET Core';
+      case 5173:
+        return 'Vite App';
+      case 5174:
+        return 'Vite (Alt)';
       case 5500:
       case 5501:
+      case 5502:
         return 'Live Server';
-      case 5173:
-      case 5174:
-        return 'Vite App';
-      case 3000:
-      case 3001:
-        return 'React / Next.js';
-      case 8080:
-      case 8081:
-        return 'Vue / Webpack';
+      case 6006:
+        return 'Storybook';
       case 8000:
-        return 'Django / Python';
-      case 4200:
-        return 'Angular App';
-      case 5000:
-        return 'Flask / Express';
+      case 8001:
+      case 8002:
+        return 'Django / FastAPI / Python';
+      case 8080:
+        return 'Webpack / Vue / Spring Boot';
+      case 8081:
+        return 'Webpack / Metro';
+      case 8082:
+      case 8083:
+      case 8084:
+      case 8085:
+        return 'Frontend Dev Server';
+      case 8888:
+        return 'Jupyter Notebook';
+      case 9000:
+        return 'Dev Server';
       default:
         return 'Dev Server';
     }

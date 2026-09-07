@@ -134,6 +134,13 @@ body {
   animation: pulse 1.5s infinite alternate;
 }
 
+.brand-logo-img {
+  height: 28px;
+  width: auto;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
 .logo-name {
   font-size: 18px;
   font-weight: 800;
@@ -830,6 +837,13 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.footer-logo-img {
+  height: 22px;
+  width: auto;
+  border-radius: 3px;
+  object-fit: contain;
 }
 
 .footer-logo {
