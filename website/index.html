@@ -57,7 +57,7 @@
         </p>
 
         <div class="hero-actions">
-          <a href="DevMirror.apk" download="DevMirror.apk" class="btn btn-primary">
+          <a href="DevMirror.apk" download="DevMirror.apk" class="btn btn-primary mobile-cta-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
@@ -74,6 +74,39 @@
               <polyline points="12 5 19 12 12 19"></polyline>
             </svg>
           </a>
+        </div>
+
+        <!-- PC VIEW: QR CODE CALLOUT (SCAN FROM MOBILE) -->
+        <div class="pc-qr-hero">
+          <div class="pc-qr-card">
+            <div class="pc-qr-code-wrapper">
+              <div class="qr-frame">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=https%3A%2F%2Fdevmirror.red-rope.in%2F&margin=10&color=000000&bgcolor=ffffff" alt="Scan QR Code - https://devmirror.red-rope.in/" class="qr-img" width="130" height="130" loading="eager">
+              </div>
+              <div class="qr-scan-line"></div>
+            </div>
+
+            <div class="pc-qr-content">
+              <div class="pc-qr-badge">
+                <span class="mobile-pulse-dot"></span>
+                <span>AVAILABLE ONLY FOR MOBILE</span>
+              </div>
+              <h3 class="pc-qr-heading">Scan from your mobile phone</h3>
+              <p class="pc-qr-subtext">
+                DevMirror is a mobile app. Point your phone camera at this QR code to open <strong>devmirror.red-rope.in</strong> and download the APK directly.
+              </p>
+              <div class="pc-qr-footer">
+                <div class="pc-url-tag">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                  <span>https://devmirror.red-rope.in/</span>
+                </div>
+                <a href="DevMirror.apk" download="DevMirror.apk" class="pc-direct-download" title="Download directly on PC">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Direct PC Download</span>
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="hero-stats">
@@ -214,26 +247,45 @@
         <h2 class="download-title">Get DevMirror for Android</h2>
         <p class="download-desc">Built by developers who got sick and tired of typing IPv4 addresses on touch keyboards.</p>
 
-        <div class="download-buttons">
-          <a href="DevMirror.apk" download="DevMirror.apk" class="btn btn-download" id="downloadApkBtn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            <div class="btn-text-block">
-              <span class="btn-subtext">Direct APK Download</span>
-              <span class="btn-maintext">Download DevMirror.apk</span>
+        <div class="download-desktop-grid">
+          <!-- QR Box on PC -->
+          <div class="download-qr-box">
+            <div class="download-qr-img-wrapper">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=https%3A%2F%2Fdevmirror.red-rope.in%2F&margin=10&color=000000&bgcolor=ffffff" alt="Scan QR Code" class="qr-img" width="140" height="140" loading="lazy">
             </div>
-          </a>
-        </div>
+            <div class="download-qr-label">
+              <span class="mobile-pulse-dot"></span>
+              <span>Scan with mobile camera</span>
+            </div>
+          </div>
 
-        <div class="download-specs">
-          <span>Android 8.0+</span>
-          <span>•</span>
-          <span>~20 MB</span>
-          <span>•</span>
-          <span>Zero Permissions Required</span>
+          <!-- Download Action Column -->
+          <div class="download-action-col">
+            <div class="pc-only-pill">
+              <span>App is available only for mobile</span>
+            </div>
+            <div class="download-buttons">
+              <a href="DevMirror.apk" download="DevMirror.apk" class="btn btn-download" id="downloadApkBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <div class="btn-text-block">
+                  <span class="btn-subtext">Direct APK Download</span>
+                  <span class="btn-maintext">Download DevMirror.apk</span>
+                </div>
+              </a>
+            </div>
+
+            <div class="download-specs">
+              <span>Android 8.0+</span>
+              <span>•</span>
+              <span>~48 MB</span>
+              <span>•</span>
+              <span>Zero Permissions Required</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
