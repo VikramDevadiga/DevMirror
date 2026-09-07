@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevMirror — Local Dev Server on Your Phone with Zero Bullshit</title>
+  <meta name="description" content="Stop typing IP addresses into your phone browser. DevMirror auto-discovers your local dev servers (Vite, Next.js, Django, Live Server) across Wi-Fi in 1-tap.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Ambient background lighting -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="grid-overlay"></div>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="#" class="logo">
+        <div class="live-pill">
+          <span class="live-dot"></span>
+          <span class="live-text">LIVE</span>
+        </div>
+        <span class="logo-name">DevMirror</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#comparison" class="nav-link">The Difference</a>
+        <a href="DevMirror.apk" download="DevMirror.apk" class="nav-link">Download APK</a>
+        <a href="#contact" class="nav-link contact-btn">Contact Us</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="hero-section">
+      <div class="hero-content">
+        <div class="hero-tag">
+          <span class="tag-icon">⚡</span>
+          <span>Zero IP typing • Zero configuration • 100% Developer Speed</span>
+        </div>
+
+        <h1 class="hero-title">
+          Stop typing IP addresses into your phone.<br>
+          <span class="gradient-text">Test local servers in 1-tap.</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          DevMirror auto-detects running Vite, Next.js, Live Server, Flask, and Django instances on your Wi-Fi network and streams them straight to your mobile browser in real-time. No bullshit.
+        </p>
+
+        <div class="hero-actions">
+          <a href="DevMirror.apk" download="DevMirror.apk" class="btn btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Download APK (Android)</span>
+            <span class="btn-badge">v1.0</span>
+          </a>
+
+          <a href="#comparison" class="btn btn-secondary">
+            <span>See With vs Without</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-value">&lt; 0.5s</span>
+            <span class="stat-label">LAN Discovery Time</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-value">0</span>
+            <span class="stat-label">IPs to Remember</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-value">1-Tap</span>
+            <span class="stat-label">Instant Browser Preview</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WITH VS WITHOUT DEVMIRROR (CORE COMPARISON) -->
+    <section id="comparison" class="comparison-section">
+      <div class="section-header">
+        <div class="section-badge">REALITY CHECK</div>
+        <h2 class="section-title">The Software Developer Dilemma</h2>
+        <p class="section-subtitle">How testing on a real mobile device feels today vs how it should feel.</p>
+      </div>
+
+      <!-- Comparison Toggle -->
+      <div class="toggle-container">
+        <div class="segmented-control" id="viewToggle">
+          <button class="toggle-btn active" data-view="split">Side-by-Side</button>
+          <button class="toggle-btn" data-view="without">Without DevMirror</button>
+          <button class="toggle-btn" data-view="with">With DevMirror</button>
+        </div>
+      </div>
+
+      <!-- Comparison Grid -->
+      <div class="comparison-grid" id="comparisonGrid" data-active-view="split">
+        <!-- WITHOUT DEVMIRROR CARD -->
+        <div class="comparison-card without-card">
+          <div class="card-header">
+            <div class="status-indicator without-indicator">
+              <span class="indicator-icon">✕</span>
+              <span class="indicator-text">WITHOUT DEVMIRROR</span>
+            </div>
+            <span class="pain-badge">The Frustrating Ritual</span>
+          </div>
+
+          <div class="step-list">
+            <div class="step-item pain">
+              <div class="step-number">1</div>
+              <div class="step-info">
+                <h4>Hunting for your IP</h4>
+                <p>Open terminal, run <code>ipconfig</code> or <code>ifconfig</code>, scroll through 50 virtual adapters to find IPv4 address.</p>
+                <div class="code-snippet">
+                  <code>$ ipconfig | grep "IPv4"</code>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-item pain">
+              <div class="step-number">2</div>
+              <div class="step-info">
+                <h4>Fumbling on Mobile Keyboard</h4>
+                <p>Unlock phone, open Chrome, painstakingly type <code>192.168.1.143:5173</code> with numeric keypad mode switching.</p>
+              </div>
+            </div>
+
+            <div class="step-item pain">
+              <div class="step-number">3</div>
+              <div class="step-info">
+                <h4>Typo & Timeout Hell</h4>
+                <p>One wrong digit &rarr; 30-second endless browser spinner &rarr; <code>ERR_CONNECTION_TIMED_OUT</code>.</p>
+              </div>
+            </div>
+
+            <div class="step-item pain">
+              <div class="step-number">4</div>
+              <div class="step-info">
+                <h4>DHCP IP Address Change</h4>
+                <p>Switch Wi-Fi networks or router leases new IP &rarr; your bookmarks break &rarr; repeat the entire ritual.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer-summary pain-summary">
+            <span class="summary-icon">⏳</span>
+            <span>Total wasted time: <strong>3–5 minutes per debug session</strong></span>
+          </div>
+        </div>
+
+        <!-- WITH DEVMIRROR CARD -->
+        <div class="comparison-card with-card">
+          <div class="card-header">
+            <div class="status-indicator with-indicator">
+              <span class="indicator-icon">✓</span>
+              <span class="indicator-text">WITH DEVMIRROR</span>
+            </div>
+            <span class="glory-badge">2-Second Setup</span>
+          </div>
+
+          <div class="step-list">
+            <div class="step-item gain">
+              <div class="step-number">1</div>
+              <div class="step-info">
+                <h4>Connect to Same Wi-Fi</h4>
+                <p>Make sure your phone and dev computer are connected to the same network.</p>
+              </div>
+            </div>
+
+            <div class="step-item gain">
+              <div class="step-number">2</div>
+              <div class="step-info">
+                <h4>Open App — That's It!</h4>
+                <p>DevMirror instantly auto-detects all your running servers with webpage titles. Just tap <strong>&gt;</strong> to preview.</p>
+                <div class="detected-pill">
+                  <span class="neon-dot"></span>
+                  <span>⚡ Auto-found: Vite, Next.js, Django, Live Server...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-footer-summary gain-summary">
+            <span class="summary-icon">⚡</span>
+            <span>Total setup: <strong>Connect Wi-Fi &rarr; Open app &rarr; That's it.</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD SECTION -->
+    <section id="download" class="download-section">
+      <div class="download-card">
+        <div class="download-badge">NO ADS • NO TRACKING • LOCAL FIRST</div>
+        <h2 class="download-title">Get DevMirror for Android</h2>
+        <p class="download-desc">Built by developers who got sick and tired of typing IPv4 addresses on touch keyboards.</p>
+
+        <div class="download-buttons">
+          <a href="DevMirror.apk" download="DevMirror.apk" class="btn btn-download" id="downloadApkBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <div class="btn-text-block">
+              <span class="btn-subtext">Direct APK Download</span>
+              <span class="btn-maintext">Download DevMirror.apk</span>
+            </div>
+          </a>
+        </div>
+
+        <div class="download-specs">
+          <span>Android 8.0+</span>
+          <span>•</span>
+          <span>~20 MB</span>
+          <span>•</span>
+          <span>Zero Permissions Required</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT & FEEDBACK SECTION -->
+    <section id="contact" class="contact-section">
+      <div class="contact-box">
+        <div class="contact-neon-header">
+          <span class="neon-indicator"></span>
+          <span>DIRECT DEVELOPER LINE</span>
+        </div>
+        <h2 class="contact-title">Got feedback, bug report, or feature idea?</h2>
+        <p class="contact-subtitle">No automated bots or ticketing systems. Send an email directly to the creators:</p>
+
+        <div class="email-box">
+          <span class="email-address" id="emailText">redropecompany@gmail.com</span>
+          <button class="copy-btn" id="copyEmailBtn" aria-label="Copy Email">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span id="copyBtnText">Copy</span>
+          </button>
+          <a href="mailto:redropecompany@gmail.com?subject=[DevMirror]%20Feedback" class="send-btn">
+            <span>Send Email</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <span class="footer-logo">DevMirror</span>
+        <span class="footer-tagline">— Built for developers, by developers.</span>
+      </div>
+      <div class="footer-links">
+        <a href="#comparison">With vs Without</a>
+        <a href="DevMirror.apk" download="DevMirror.apk">Download APK</a>
+        <a href="mailto:redropecompany@gmail.com">redropecompany@gmail.com</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">Email copied to clipboard!</div>
+
+  <script src="app.js"></script>
+</body>
+</html>
