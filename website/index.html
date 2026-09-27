@@ -3,19 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DevMirror — Open your local dev server on your phone in one tap</title>
-  <meta name="description" content="Stop typing IP addresses into your phone browser. DevMirror auto-discovers local dev servers (Vite, Next.js, Django, Flask, Live Server) on your Wi-Fi and opens them in one tap.">
+  <title>DevMirror — View Localhost &amp; Live Server on Your Phone</title>
+  <meta name="description" content="View VS Code Live Server, Vite, Next.js or any localhost site on your Android phone in one tap. DevMirror finds dev servers on your Wi-Fi. No IP typing.">
+  <link rel="canonical" href="https://devmirror.red-rope.in/">
+  <meta name="robots" content="index, follow, max-image-preview:large">
   <meta name="theme-color" content="#000000">
-  <meta property="og:title" content="DevMirror — your localhost, on your phone">
-  <meta property="og:description" content="Auto-discover local dev servers on your Wi-Fi and open them on your phone in one tap.">
-  <meta property="og:image" content="https://devmirror.red-rope.in/logo.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DevMirror">
+  <meta property="og:title" content="DevMirror — View Localhost &amp; Live Server on Your Phone">
+  <meta property="og:description" content="Open your local dev server on your Android phone in one tap. No IP addresses, no config.">
   <meta property="og:url" content="https://devmirror.red-rope.in/">
+  <meta property="og:image" content="https://devmirror.red-rope.in/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="DevMirror: open localhost on your phone in one tap">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DevMirror — View Localhost &amp; Live Server on Your Phone">
+  <meta name="twitter:description" content="Open your local dev server on your Android phone in one tap. No IP addresses, no config.">
+  <meta name="twitter:image" content="https://devmirror.red-rope.in/og.png">
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://devmirror.red-rope.in/#org",
+        "name": "Redrope",
+        "url": "https://devmirror.red-rope.in/",
+        "logo": "https://devmirror.red-rope.in/logo.png",
+        "email": "redropecompany@gmail.com"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://devmirror.red-rope.in/#website",
+        "name": "DevMirror",
+        "url": "https://devmirror.red-rope.in/",
+        "publisher": { "@id": "https://devmirror.red-rope.in/#org" }
+      },
+      {
+        "@type": "MobileApplication",
+        "name": "DevMirror",
+        "description": "Android app that finds local dev servers (VS Code Live Server, Vite, Next.js, Django, Flask) on your Wi-Fi and opens them on your phone in one tap.",
+        "operatingSystem": "Android 8.0+",
+        "applicationCategory": "DeveloperApplication",
+        "softwareVersion": "1.0",
+        "fileSize": "48MB",
+        "downloadUrl": "https://devmirror.red-rope.in/DevMirror.apk",
+        "image": "https://devmirror.red-rope.in/logo.png",
+        "url": "https://devmirror.red-rope.in/",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "publisher": { "@id": "https://devmirror.red-rope.in/#org" }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How do I view Live Server on my phone?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Connect your phone and computer to the same Wi-Fi, click Go Live in VS Code, then open DevMirror. Your Live Server appears in the list, so tap it. Without the app, type http://YOUR-COMPUTER-IP:5500 into your phone's browser." }
+          },
+          {
+            "@type": "Question",
+            "name": "Why doesn't localhost work on my phone?",
+            "acceptedAnswer": { "@type": "Answer", "text": "localhost (or 127.0.0.1) always means \"this device\". On your phone it points at the phone itself, not your computer. You need your computer's local network address, like 192.168.1.14, and DevMirror finds it for you." }
+          },
+          {
+            "@type": "Question",
+            "name": "My dev server isn't showing up on my phone. What should I check?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Check that the server is listening on 0.0.0.0, both devices are on the same network (guest Wi-Fi often blocks device-to-device traffic), and your firewall allows the port. You can always type the IP manually or connect over USB with adb reverse." }
+          },
+          {
+            "@type": "Question",
+            "name": "Which ports does DevMirror scan?",
+            "acceptedAnswer": { "@type": "Answer", "text": "80, 443, 3000-3002, 4000, 4200, 5000-5001, 5173-5174, 5500-5502, 6006, 8000-8002, 8080-8085, 8888 and 9000. Anything else can be entered manually." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does DevMirror send my data anywhere?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. There's no account, no analytics and no ads. The app only talks to devices on your local network, and your recent servers are stored on your phone." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is there an iOS version of DevMirror?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Not right now. DevMirror is Android-only. On iPhone you can open your computer's IP address and port in Safari manually." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
 
@@ -27,6 +109,7 @@
       <nav class="nav-links" aria-label="Primary">
         <a href="#how">How it works</a>
         <a href="#setup">Setup</a>
+        <a href="#guides">Guides</a>
         <a href="#faq">FAQ</a>
       </nav>
       <a href="#download" class="btn btn-sm btn-light">Get the app</a>
@@ -40,7 +123,7 @@
         <div class="hero-copy">
           <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> Android app &middot; v1.0 &middot; free</p>
           <h1>Stop typing IP addresses into your phone.</h1>
-          <p class="hero-sub">DevMirror scans your Wi-Fi for running dev servers (Vite, Next.js, Live Server, Django, Flask) and opens them in your phone's browser with one tap. No <code>ipconfig</code>. No <code>192.168.x.x</code>.</p>
+          <p class="hero-sub">DevMirror opens your localhost on your phone. It scans your Wi-Fi for running dev servers (VS Code Live Server, Vite, Next.js, Django, Flask) and opens them in your phone's browser with one tap. No <code>ipconfig</code>. No <code>192.168.x.x</code>.</p>
 
           <!-- Mobile: straight download -->
           <div class="cta-mobile">
@@ -262,11 +345,11 @@
 
           <div class="tab-panel" role="tabpanel" id="tab-vite" aria-labelledby="t-vite">
             <div class="code"><code>npx vite --host</code><button class="copy" type="button">Copy</button></div>
-            <p>Or add <code>--host</code> to your dev script: <code>npm run dev -- --host</code>.</p>
+            <p>Or add <code>--host</code> to your dev script: <code>npm run dev -- --host</code>. <a class="text-link" href="vite-on-mobile/">Vite guide &rarr;</a></p>
           </div>
           <div class="tab-panel" role="tabpanel" id="tab-next" aria-labelledby="t-next" hidden>
             <div class="code"><code>npm run dev -- -H 0.0.0.0</code><button class="copy" type="button">Copy</button></div>
-            <p>Next.js serves on port <code>3000</code> by default.</p>
+            <p>Next.js serves on port <code>3000</code> by default. <a class="text-link" href="nextjs-on-mobile/">Next.js guide &rarr;</a></p>
           </div>
           <div class="tab-panel" role="tabpanel" id="tab-ng" aria-labelledby="t-ng" hidden>
             <div class="code"><code>ng serve --host 0.0.0.0</code><button class="copy" type="button">Copy</button></div>
@@ -282,12 +365,45 @@
           </div>
           <div class="tab-panel" role="tabpanel" id="tab-live" aria-labelledby="t-live" hidden>
             <div class="code code-plain"><span>Click <b>Go Live</b> in the VS Code status bar.</span></div>
-            <p>Live Server already listens on your network, so there's nothing to change.</p>
+            <p>Live Server usually accepts connections from your network with no changes. <a class="text-link" href="live-server-on-mobile/">Live Server guide &rarr;</a></p>
           </div>
           <div class="tab-panel" role="tabpanel" id="tab-usb" aria-labelledby="t-usb" hidden>
             <div class="code"><code>adb reverse tcp:5173 tcp:5173</code><button class="copy" type="button">Copy</button></div>
             <p>Enable USB debugging, plug in, forward your port, then enter <code>127.0.0.1</code> and the port in DevMirror's connect bar. No Wi-Fi needed.</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── GUIDES ── -->
+    <section id="guides" class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="kicker">Guides</p>
+          <h2>Test on a real phone, step by step.</h2>
+          <p class="section-sub">Doing it by hand, or stuck on a firewall? These guides cover the manual way too, and it works on iPhone.</p>
+        </div>
+        <div class="guide-cards">
+          <a class="guide-card" href="live-server-on-mobile/">
+            <span class="guide-tag">VS Code · :5500</span>
+            <h3>How to view Live Server on your phone</h3>
+            <p>Open your Live Server page on a phone over Wi-Fi, and fix it when it won't load.</p>
+          </a>
+          <a class="guide-card" href="localhost-on-phone/">
+            <span class="guide-tag">Any server</span>
+            <h3>How to open localhost on your phone</h3>
+            <p>Why <code>localhost</code> fails on mobile, how to find your IP, and four ways to connect.</p>
+          </a>
+          <a class="guide-card" href="vite-on-mobile/">
+            <span class="guide-tag">Vite · :5173</span>
+            <h3>How to open a Vite dev server on mobile</h3>
+            <p><code>--host</code>, <code>server.host</code>, and keeping hot reload working on the phone.</p>
+          </a>
+          <a class="guide-card" href="nextjs-on-mobile/">
+            <span class="guide-tag">Next.js · :3000</span>
+            <h3>How to test a Next.js app on your phone</h3>
+            <p>Reach <code>next dev</code> from a phone, including the <code>allowedDevOrigins</code> fix.</p>
+          </a>
         </div>
       </div>
     </section>
@@ -300,6 +416,14 @@
           <h2>Questions, answered.</h2>
         </div>
         <div class="faq">
+          <details>
+            <summary>How do I view Live Server on my phone?</summary>
+            <p>Connect your phone and computer to the same Wi-Fi, click <em>Go Live</em> in VS Code, then open DevMirror. Your Live Server appears in the list, so tap it. Without the app, type <code>http://YOUR-COMPUTER-IP:5500</code> into your phone's browser. <a href="live-server-on-mobile/">Full Live Server guide</a>.</p>
+          </details>
+          <details>
+            <summary>Why doesn't localhost work on my phone?</summary>
+            <p><code>localhost</code> (or <code>127.0.0.1</code>) always means "this device". On your phone it points at the phone itself, not your computer. You need your computer's local network address, like <code>192.168.1.14</code>, and DevMirror finds it for you. <a href="localhost-on-phone/">How to open localhost on a phone</a>.</p>
+          </details>
           <details>
             <summary>My server isn't showing up.</summary>
             <p>Check three things: the server is listening on <code>0.0.0.0</code> (see <a href="#setup">Setup</a>), both devices are on the same network (guest Wi-Fi often blocks device-to-device traffic), and your firewall allows the port. Windows asks the first time a server starts, so choose <em>Allow on private networks</em>. You can always type the IP manually or connect over USB.</p>
@@ -314,7 +438,7 @@
           </details>
           <details>
             <summary>Is there an iOS version?</summary>
-            <p>Not right now. DevMirror is Android-only. If you'd use it on iPhone, <a href="#contact">tell us</a>.</p>
+            <p>Not right now. DevMirror is Android-only. On iPhone you can still use the manual method in the <a href="localhost-on-phone/">localhost guide</a>, and if you'd use an iOS app, <a href="#contact">tell us</a>.</p>
           </details>
           <details>
             <summary>Android says the APK is from an unknown source.</summary>
@@ -372,6 +496,7 @@
       <nav class="footer-links" aria-label="Footer">
         <a href="#how">How it works</a>
         <a href="#setup">Setup</a>
+        <a href="#guides">Guides</a>
         <a href="#faq">FAQ</a>
         <a href="DevMirror.apk" download="DevMirror.apk">Download APK</a>
       </nav>

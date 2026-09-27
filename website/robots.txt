@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://devmirror.red-rope.in/sitemap.xml
