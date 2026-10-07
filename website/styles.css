@@ -234,7 +234,7 @@ td { color: var(--muted); }
 
 .answer { border: 1px solid var(--line-hi); border-radius: 14px; background: var(--surface); padding: 22px 26px; margin-bottom: 48px; }
 .answer-label { font-family: var(--font-mono); font-size: 12px; color: var(--dim); margin-bottom: 8px; }
-.answer ol { margin: 10px 0 0 20px; }
+.answer ol, .answer ul { margin: 10px 0 0 20px; }
 .answer li { margin-bottom: 6px; }
 
 .prose h2 { font-size: clamp(26px, 3.2vw, 32px); margin: 56px 0 16px; scroll-margin-top: 80px; }
