@@ -23,7 +23,8 @@ Whether you're developing on **Vite, Next.js, Live Server, Flask, Django, Angula
 
 ## 📥 Download
 
-- **Android APK**: download the latest build from [devmirror.red-rope.in](https://devmirror.red-rope.in/).
+- **Google Play**: [DevMirror - Localhost Viewer](https://play.google.com/store/apps/details?id=com.devmirror.dev_mirror)
+- **Website**: [devmirror.red-rope.in](https://devmirror.red-rope.in/) (on a computer, scan the QR code with your phone)
 - **Build from source**: see **Building & Running the Project** below.
 
 ---

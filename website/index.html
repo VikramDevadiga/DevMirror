@@ -29,6 +29,10 @@
   <link rel="preconnect" href="https://www.youtube-nocookie.com">
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    // Android visitors just tap the Play button; everyone else also gets the QR code
+    if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('is-android');
+  </script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -56,8 +60,7 @@
         "operatingSystem": "Android 8.0+",
         "applicationCategory": "DeveloperApplication",
         "softwareVersion": "1.0",
-        "fileSize": "48MB",
-        "downloadUrl": "https://devmirror.red-rope.in/DevMirror.apk",
+        "downloadUrl": "https://play.google.com/store/apps/details?id=com.devmirror.dev_mirror",
         "image": "https://devmirror.red-rope.in/logo.png",
         "url": "https://devmirror.red-rope.in/",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -131,16 +134,16 @@
         <p class="lead">DevMirror finds the dev servers running on your Wi-Fi (Live Server, Vite, Next.js, Django) and opens them on your Android phone in one tap.</p>
 
         <div class="get" id="get">
-          <a href="DevMirror.apk" download="DevMirror.apk" class="btn btn-lg">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download for Android
+          <a href="https://play.google.com/store/apps/details?id=com.devmirror.dev_mirror" class="btn btn-lg" rel="noopener">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 3.6v16.8a1 1 0 0 0 1.52.85l13.2-8.4a1 1 0 0 0 0-1.7L8.52 2.75A1 1 0 0 0 7 3.6z"/></svg>
+            Get it on Google Play
           </a>
           <div class="qr">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https%3A%2F%2Fdevmirror.red-rope.in%2F&margin=0&color=000000&bgcolor=ffffff" alt="QR code linking to devmirror.red-rope.in" width="64" height="64" loading="lazy">
-            <span>On your computer?<br>Scan to get it on your phone.</span>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.devmirror.dev_mirror&margin=0&color=000000&bgcolor=ffffff" alt="QR code linking to DevMirror on Google Play" width="156" height="156" loading="lazy">
+            <span><strong>On your computer?</strong>Scan with your Android phone<br>to install from Google Play.</span>
           </div>
         </div>
-        <p class="specs">Free &middot; v1.0 &middot; 48 MB &middot; Android 8.0+ &middot; No account, no tracking</p>
+        <p class="specs">Free &middot; v1.0 &middot; Android 8.0+ &middot; No account, no tracking</p>
       </div>
     </section>
 
