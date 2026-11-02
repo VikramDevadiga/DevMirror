@@ -77,6 +77,7 @@ class _ScanTerminalState extends State<ScanTerminal>
           border: Border.all(color: AppTheme.darkBorder),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildTitleBar(),
