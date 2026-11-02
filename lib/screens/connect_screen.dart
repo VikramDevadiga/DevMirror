@@ -8,6 +8,7 @@ import '../services/connection_storage_service.dart';
 import '../services/network_discovery_service.dart';
 import '../services/reachability_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/scan_terminal.dart';
 import 'help_screen.dart';
 
 class ConnectScreen extends StatefulWidget {
@@ -39,6 +40,16 @@ class _ConnectScreenState extends State<ConnectScreen>
   bool _isScanning = false;
   final ValueNotifier<double> _scanProgressNotifier = ValueNotifier<double>(0.0);
   StreamSubscription<DiscoveredServer>? _scanSubscription;
+  int _scanGeneration = 0;
+
+  // Terminal-style scan log
+  static const int _maxScanLogLines = 30;
+  static const Duration _scanLogLineGap = Duration(milliseconds: 70);
+  final ValueNotifier<List<ScanLogEntry>> _scanLogNotifier =
+      ValueNotifier<List<ScanLogEntry>>(const []);
+  bool _showScanLog = false;
+  Timer? _scanLogHideTimer;
+  DateTime _nextScanLogSlot = DateTime.now();
 
   late final AnimationController _pulseController;
 
@@ -73,11 +84,16 @@ class _ConnectScreenState extends State<ConnectScreen>
 
   void _startLiveScan() {
     _scanSubscription?.cancel();
+    _scanLogHideTimer?.cancel();
+    final scanId = ++_scanGeneration;
+    _nextScanLogSlot = DateTime.now();
 
     setState(() {
       _liveServers.clear();
       _isScanning = true;
+      _showScanLog = true;
       _scanProgressNotifier.value = 0.0;
+      _scanLogNotifier.value = const [];
     });
 
     final ports = List<int>.from(NetworkDiscoveryService.commonPorts);
@@ -104,8 +120,10 @@ class _ConnectScreenState extends State<ConnectScreen>
       ports: ports,
       priorityIps: priorityIps.toList(),
       onProgress: (progress, currentIp) {
+        if (!mounted || scanId != _scanGeneration) return;
         _scanProgressNotifier.value = progress;
       },
+      onLog: (entry) => _appendScanLog(entry, scanId),
     );
 
     _scanSubscription = stream.listen(
@@ -128,6 +146,7 @@ class _ConnectScreenState extends State<ConnectScreen>
             _isScanning = false;
             _scanProgressNotifier.value = 1.0;
           });
+          _scheduleScanLogHide();
         }
       },
       onError: (err) {
@@ -135,15 +154,54 @@ class _ConnectScreenState extends State<ConnectScreen>
           setState(() {
             _isScanning = false;
           });
+          _scheduleScanLogHide();
         }
       },
     );
+  }
+
+  /// Releases log lines at a steady typing pace instead of in bursts
+  void _appendScanLog(ScanLogEntry entry, int scanId) {
+    if (!mounted || scanId != _scanGeneration) return;
+
+    final now = DateTime.now();
+    final backlog = _nextScanLogSlot.difference(now);
+    // Sampled probe lines are just ambience; skip them rather than lag behind
+    if (entry.level == ScanLogLevel.probe && backlog > Duration.zero) return;
+
+    final delay = backlog > Duration.zero ? backlog : Duration.zero;
+    _nextScanLogSlot = now.add(delay + _scanLogLineGap);
+
+    Future.delayed(delay, () {
+      if (!mounted || scanId != _scanGeneration) return;
+      final lines = _scanLogNotifier.value;
+      _scanLogNotifier.value = [
+        ...lines.length >= _maxScanLogLines
+            ? lines.sublist(lines.length - _maxScanLogLines + 1)
+            : lines,
+        entry,
+      ];
+    });
+  }
+
+  /// Keeps the finished log on screen briefly, then collapses it
+  void _scheduleScanLogHide() {
+    _scanLogHideTimer?.cancel();
+    _scanLogHideTimer = Timer(const Duration(milliseconds: 2200), () {
+      if (mounted) {
+        setState(() {
+          _showScanLog = false;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
     _scanProgressNotifier.dispose();
+    _scanLogNotifier.dispose();
+    _scanLogHideTimer?.cancel();
     _scanSubscription?.cancel();
     _ipController.dispose();
     _portController.dispose();
@@ -628,6 +686,32 @@ class _ConnectScreenState extends State<ConnectScreen>
               ],
             ),
             const SizedBox(height: 10),
+
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SizeTransition(
+                  sizeFactor: animation,
+                  alignment: Alignment.topCenter,
+                  child: child,
+                ),
+              ),
+              child: _showScanLog
+                  ? Padding(
+                      key: const ValueKey('scan-terminal'),
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: ScanTerminal(
+                        logs: _scanLogNotifier,
+                        progress: _scanProgressNotifier,
+                        isScanning: _isScanning,
+                        foundCount: _liveServers.length,
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('scan-terminal-hidden')),
+            ),
 
             if (_liveServers.isNotEmpty) ...[
               ..._liveServers.map((server) {

@@ -40,6 +40,17 @@ class DiscoveredServer {
   }
 }
 
+enum ScanLogLevel { command, info, probe, open, title, warn, done }
+
+/// A single line of the live scan log, rendered terminal-style in the UI
+class ScanLogEntry {
+  final ScanLogLevel level;
+  final String message;
+  final Duration elapsed;
+
+  const ScanLogEntry(this.level, this.message, this.elapsed);
+}
+
 class _ProbeTask {
   final String ip;
   final int port;
@@ -93,44 +104,94 @@ class NetworkDiscoveryService {
     9000, // Various development tools
   ];
 
-  /// Finds the device's local Wi-Fi / Ethernet IPv4 address
-  static Future<String?> getLocalDeviceIp() async {
+  /// Interface name prefixes that never share a LAN with the dev machine
+  /// (loopback, cellular, VPN)
+  static const List<String> _excludedInterfacePrefixes = [
+    'lo', 'dummy', 'rmnet', 'r_rmnet', 'rev_rmnet', 'ccmni', 'seth', 'pdp',
+    'ppp', 'clat', 'v4-', 'tun', 'ipsec', 'wg',
+  ];
+
+  static const int unknownInterfaceRank = 3;
+
+  /// Scan order for an interface (lower first): Wi-Fi, Ethernet, then
+  /// hotspot / USB / Bluetooth tethering. Returns null for excluded interfaces.
+  static int? interfaceRank(String name) {
+    final n = name.toLowerCase();
+    bool startsWithAny(List<String> prefixes) => prefixes.any(n.startsWith);
+
+    if (startsWithAny(_excludedInterfacePrefixes)) return null;
+    if (startsWithAny(['wlan', 'wifi'])) return 0;
+    if (startsWithAny(['eth', 'en'])) return 1;
+    if (startsWithAny(['ap', 'swlan', 'softap', 'rndis', 'ncm', 'usb', 'bt-pan'])) {
+      return 2;
+    }
+    return unknownInterfaceRank;
+  }
+
+  /// Picks the device addresses whose subnets should be scanned, best first.
+  /// Unrecognised interfaces are only used when no known LAN interface has an address.
+  static List<String> selectLanIps(Map<String, List<String>> addressesByInterface) {
+    final ipsByRank = <int, List<String>>{};
+    addressesByInterface.forEach((name, addresses) {
+      final rank = interfaceRank(name);
+      if (rank == null) return;
+      for (final ip in addresses) {
+        if (!ip.startsWith('127.') && !ip.startsWith('169.254.')) {
+          ipsByRank.putIfAbsent(rank, () => []).add(ip);
+        }
+      }
+    });
+
+    final knownRanks = ipsByRank.keys.where((r) => r < unknownInterfaceRank).toList()..sort();
+    final known = [for (final rank in knownRanks) ...ipsByRank[rank]!];
+    return known.isNotEmpty ? known : (ipsByRank[unknownInterfaceRank] ?? []);
+  }
+
+  /// Finds the device's local IPv4 addresses on every network a dev machine
+  /// could share (Wi-Fi, Ethernet, hotspot, USB tethering), Wi-Fi first
+  static Future<List<String>> getLocalNetworkIps() async {
     try {
       final interfaces = await NetworkInterface.list(
         type: InternetAddressType.IPv4,
         includeLinkLocal: false,
       );
-
-      // Sort interfaces: prioritize Wi-Fi/Ethernet/USB before cellular/VPN
-      interfaces.sort((a, b) {
-        final aName = a.name.toLowerCase();
-        final bName = b.name.toLowerCase();
-        final aIsWifi = aName.contains('wlan') ||
-            aName.contains('wifi') ||
-            aName.contains('eth') ||
-            aName.contains('rndis') ||
-            aName.contains('en');
-        final bIsWifi = bName.contains('wlan') ||
-            bName.contains('wifi') ||
-            bName.contains('eth') ||
-            bName.contains('rndis') ||
-            bName.contains('en');
-
-        if (aIsWifi && !bIsWifi) return -1;
-        if (!aIsWifi && bIsWifi) return 1;
-        return 0;
+      return selectLanIps({
+        for (final interface in interfaces)
+          interface.name: [for (final addr in interface.addresses) addr.address],
       });
+    } catch (_) {
+      return [];
+    }
+  }
 
-      for (final interface in interfaces) {
-        for (final addr in interface.addresses) {
-          final ip = addr.address;
-          if (!ip.startsWith('127.') && !ip.startsWith('169.254.')) {
-            return ip;
-          }
-        }
+  /// Orders the hosts to probe: priority IPs, then each subnet's own host,
+  /// gateway (.1) and +/- 30 neighbors, then the remainder of each subnet
+  static List<String> buildTargetIps(List<String> localIps, List<String> priorityIps) {
+    final targetIps = <String>{...priorityIps.where((ip) => ip.isNotEmpty)};
+
+    final subnets = <(String prefix, int host)>[];
+    for (final ip in localIps) {
+      final parts = ip.split('.');
+      final host = parts.length == 4 ? int.tryParse(parts[3]) : null;
+      if (host != null) subnets.add((parts.take(3).join('.'), host));
+    }
+
+    for (final (prefix, host) in subnets) {
+      if (host >= 1 && host <= 254) targetIps.add('$prefix.$host');
+      targetIps.add('$prefix.1');
+      for (int offset = 1; offset <= 30; offset++) {
+        if (host - offset >= 1) targetIps.add('$prefix.${host - offset}');
+        if (host + offset <= 254) targetIps.add('$prefix.${host + offset}');
       }
-    } catch (_) {}
-    return null;
+    }
+
+    for (final (prefix, _) in subnets) {
+      for (int i = 1; i <= 254; i++) {
+        targetIps.add('$prefix.$i');
+      }
+    }
+
+    return targetIps.toList();
   }
 
   /// Probes a single IP and port via TCP socket
@@ -253,84 +314,57 @@ class NetworkDiscoveryService {
     }
   }
 
-  /// Scans the local subnet for active dev servers using a smooth, non-blocking worker pool
+  static String _formatCount(int n) => n
+      .toString()
+      .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
+
+  /// Scans every local subnet (Wi-Fi first) for active dev servers using a smooth, non-blocking worker pool
   static Stream<DiscoveredServer> scanSubnet({
     List<int> ports = commonPorts,
     List<String> priorityIps = const [],
     void Function(double progress, String currentIp)? onProgress,
+    void Function(ScanLogEntry entry)? onLog,
   }) {
     late final StreamController<DiscoveredServer> controller;
+    bool cancelled = false;
 
     controller = StreamController<DiscoveredServer>(
+      // Stop the worker pool when the listener goes away (rescan / screen disposed)
+      onCancel: () => cancelled = true,
       onListen: () async {
+        final stopwatch = Stopwatch()..start();
+        int openCount = 0;
+
+        void log(ScanLogLevel level, String message) {
+          if (!cancelled) {
+            onLog?.call(ScanLogEntry(level, message, stopwatch.elapsed));
+          }
+        }
+
         try {
-          final localIp = await getLocalDeviceIp();
-          if (localIp == null || controller.isClosed) {
-            // Still scan priority IPs if available (e.g. 127.0.0.1 or user-specified IP)
-            if (priorityIps.isNotEmpty && !controller.isClosed) {
-              for (final ip in priorityIps) {
-                for (final port in ports) {
-                  final isOpen = await probeSocket(ip, port);
-                  if (isOpen && !controller.isClosed) {
-                    controller.add(
-                      DiscoveredServer(
-                        ip: ip,
-                        port: port,
-                        serverType: _identifyServer(port),
-                      ),
-                    );
-                  }
-                }
-              }
-            }
-            if (!controller.isClosed) await controller.close();
-            return;
+          log(ScanLogLevel.command, 'devmirror scan --lan --ports ${ports.length}');
+          log(ScanLogLevel.info, 'resolving network interfaces');
+
+          final localIps = await getLocalNetworkIps();
+          if (controller.isClosed) return;
+
+          if (localIps.isEmpty) {
+            log(ScanLogLevel.warn, 'no Wi-Fi/LAN interface found');
+          }
+          for (final ip in localIps) {
+            log(ScanLogLevel.info, 'local ip $ip/24');
+          }
+          final savedHosts = priorityIps.where((ip) => ip.isNotEmpty).toSet().length;
+          if (savedHosts > 0) {
+            log(
+              ScanLogLevel.info,
+              'probing $savedHosts saved ${savedHosts == 1 ? 'host' : 'hosts'} first',
+            );
           }
 
-          final parts = localIp.split('.');
-          if (parts.length != 4) {
-            if (!controller.isClosed) await controller.close();
-            return;
-          }
-
-          final subnetPrefix = '${parts[0]}.${parts[1]}.${parts[2]}';
-          final myHostNumber = int.tryParse(parts[3]) ?? 0;
-
-          // Priority 1: User's priority IPs (e.g. manually entered IP, saved servers, 127.0.0.1)
-          final List<String> targetIps = [];
-          for (final pip in priorityIps) {
-            if (pip.isNotEmpty && !targetIps.contains(pip)) {
-              targetIps.add(pip);
-            }
-          }
-
-          // Priority 2: Device's own IP & default gateway (.1)
-          if (myHostNumber >= 1 && myHostNumber <= 254) {
-            final myIp = '$subnetPrefix.$myHostNumber';
-            if (!targetIps.contains(myIp)) targetIps.add(myIp);
-          }
-          final gatewayIp = '$subnetPrefix.1';
-          if (!targetIps.contains(gatewayIp)) targetIps.add(gatewayIp);
-
-          // Priority 3: Immediate neighbors (+/- 30)
-          for (int offset = 1; offset <= 30; offset++) {
-            if (myHostNumber - offset >= 1) {
-              final ip = '$subnetPrefix.${myHostNumber - offset}';
-              if (!targetIps.contains(ip)) targetIps.add(ip);
-            }
-            if (myHostNumber + offset <= 254) {
-              final ip = '$subnetPrefix.${myHostNumber + offset}';
-              if (!targetIps.contains(ip)) targetIps.add(ip);
-            }
-          }
-
-          // Priority 4: Remainder of subnet (.2 to .254)
-          for (int i = 1; i <= 254; i++) {
-            final ip = '$subnetPrefix.$i';
-            if (!targetIps.contains(ip)) {
-              targetIps.add(ip);
-            }
-          }
+          // Priority IPs (manually entered IP, saved servers) are still scanned
+          // when no local network is found
+          final targetIps = buildTargetIps(localIps, priorityIps);
 
           // Build task queue
           final List<_ProbeTask> tasks = [];
@@ -347,9 +381,16 @@ class NetworkDiscoveryService {
           // Controlled concurrency pool (35 concurrent socket workers)
           const int concurrency = 35;
           int currentTaskIndex = 0;
+          Duration lastProbeLog = Duration.zero;
+          log(
+            ScanLogLevel.info,
+            'queued ${_formatCount(totalTasks)} probes, $concurrency workers',
+          );
 
           Future<void> worker() async {
-            while (currentTaskIndex < tasks.length && !controller.isClosed) {
+            while (currentTaskIndex < tasks.length &&
+                !controller.isClosed &&
+                !cancelled) {
               final taskIndex = currentTaskIndex++;
               if (taskIndex >= tasks.length) break;
 
@@ -363,14 +404,22 @@ class NetworkDiscoveryService {
                   port: task.port,
                   serverType: _identifyServer(task.port),
                 );
+                openCount++;
+                log(ScanLogLevel.open, '${task.ip}:${task.port}  ${baseServer.serverType}');
                 controller.add(baseServer);
 
                 // Fetch HTML title asynchronously without blocking the worker pool
                 fetchHtmlTitle(task.ip, task.port).then((title) {
                   if (title != null && !controller.isClosed) {
+                    log(ScanLogLevel.title, ':${task.port} -> "$title"');
                     controller.add(baseServer.copyWith(pageTitle: title));
                   }
                 }).catchError((_) {});
+              } else if (stopwatch.elapsed - lastProbeLog >
+                  const Duration(milliseconds: 80)) {
+                // Sample closed probes so the log streams without flooding the UI
+                lastProbeLog = stopwatch.elapsed;
+                log(ScanLogLevel.probe, '${task.ip}:${task.port}');
               }
 
               completedTasks++;
@@ -393,10 +442,13 @@ class NetworkDiscoveryService {
           await Future.wait(workers);
 
           if (!controller.isClosed) {
-            onProgress?.call(1.0, '$subnetPrefix.$myHostNumber');
+            onProgress?.call(1.0, localIps.firstOrNull ?? '');
+            final seconds = (stopwatch.elapsedMilliseconds / 1000).toStringAsFixed(1);
+            log(ScanLogLevel.done, 'scan complete: $openCount open in ${seconds}s');
             await controller.close();
           }
         } catch (_) {
+          log(ScanLogLevel.warn, 'scan aborted');
           if (!controller.isClosed) {
             await controller.close();
           }
