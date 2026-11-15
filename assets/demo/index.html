@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>DevMirror Demo</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --card: #f4f4f5;
+    --border: #e4e4e7;
+    --fg: #09090b;
+    --muted: #71717a;
+    --live: #22c55e;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Roboto Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --card: #18181b;
+      --border: #27272a;
+      --fg: #fafafa;
+      --muted: #a1a1aa;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding:
+      max(16px, env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      max(28px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
+  }
+  main { max-width: 960px; margin: 0 auto; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 8px; border-radius: 6px;
+    background: var(--fg); color: var(--bg);
+    font: 800 10px/1 var(--mono); letter-spacing: .8px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); }
+  h1 { font-size: 26px; line-height: 1.15; letter-spacing: -.5px; margin: 14px 0 6px; }
+  .lead { color: var(--muted); margin: 0; }
+  .lead code { color: var(--fg); }
+  .label {
+    margin: 26px 0 10px;
+    font: 700 11px/1 var(--mono); letter-spacing: .8px; color: var(--muted);
+  }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+  .k { font: 11px/1.3 var(--mono); color: var(--muted); }
+  .v { font: 700 17px/1.35 var(--mono); overflow-wrap: anywhere; }
+  .ua { margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--border); font: 12px/1.5 var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 2px 0; }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 576px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  .tile {
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 56px; padding: 0 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--card);
+    font: 700 13px/1 var(--mono);
+  }
+  .tile span { color: var(--muted); font-weight: 400; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  button {
+    appearance: none; border: 0; cursor: pointer;
+    min-height: 44px; padding: 0 18px; border-radius: 8px;
+    background: var(--fg); color: var(--bg);
+    font: 700 14px/1 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  button:active { opacity: .75; }
+  button:focus-visible { outline: 2px solid var(--live); outline-offset: 2px; }
+  #ping-result { font: 13px/1.4 var(--mono); color: var(--muted); }
+  #ping-result.ok { color: var(--fg); }
+  ol { margin: 0; padding-left: 20px; }
+  ol li { margin: 0 0 12px; }
+  ol li:last-child { margin-bottom: 0; }
+  .cmds { margin-top: 8px; display: grid; gap: 6px; }
+  .cmd { display: block; }
+  .cmd .k { margin-bottom: 2px; }
+  code {
+    display: block; padding: 8px 10px; border-radius: 8px;
+    background: var(--bg); border: 1px solid var(--border);
+    font: 12.5px/1.4 var(--mono); overflow-wrap: anywhere;
+  }
+  .lead code { display: inline; padding: 1px 5px; border-radius: 5px; }
+  footer { margin-top: 28px; color: var(--muted); font-size: 12px; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <span class="badge"><span class="dot"></span>DEMO SERVER</span>
+  <h1>Hello from a local dev server</h1>
+  <p class="lead">
+    DevMirror is serving this page from your phone at <code id="host">127.0.0.1</code>.
+    Your own projects open the same way, straight from your computer's dev server.
+  </p>
+
+  <div class="label">YOUR VIEWPORT</div>
+  <section class="card" aria-live="polite">
+    <div class="stats">
+      <div><div class="k">CSS pixels</div><div class="v" id="vp">–</div></div>
+      <div><div class="k">Pixel ratio</div><div class="v" id="dpr">–</div></div>
+      <div><div class="k">Breakpoint</div><div class="v" id="bp">–</div></div>
+      <div><div class="k">Orientation</div><div class="v" id="orient">–</div></div>
+      <div><div class="k">Color scheme</div><div class="v" id="scheme">–</div></div>
+      <div><div class="k">Touch points</div><div class="v" id="touch">–</div></div>
+    </div>
+    <p class="ua" id="ua"></p>
+  </section>
+  <p class="hint">Rotate your phone. These values update live, like they would while you test your own layout.</p>
+
+  <div class="label">RESPONSIVE GRID</div>
+  <div class="grid">
+    <div class="tile">Card A <span>1 col &lt; 576px</span></div>
+    <div class="tile">Card B <span>2 col ≥ 576px</span></div>
+    <div class="tile">Card C <span>3 col ≥ 900px</span></div>
+    <div class="tile">Card D</div>
+    <div class="tile">Card E</div>
+    <div class="tile">Card F</div>
+  </div>
+
+  <div class="label">SERVER ROUND-TRIP</div>
+  <section class="card">
+    <div class="row">
+      <button type="button" id="ping">Ping server</button>
+      <span id="ping-result">Sends a request to /api/ping</span>
+    </div>
+  </section>
+
+  <div class="label">TRY IT WITH YOUR PROJECT</div>
+  <section class="card">
+    <ol>
+      <li>Connect your phone and computer to the same Wi-Fi.</li>
+      <li>
+        Start your dev server so other devices can reach it:
+        <div class="cmds">
+          <div class="cmd"><div class="k">Vite (React / Vue)</div><code>npx vite --host</code></div>
+          <div class="cmd"><div class="k">Next.js</div><code>npm run dev -- -H 0.0.0.0</code></div>
+          <div class="cmd"><div class="k">Django / Python</div><code>python manage.py runserver 0.0.0.0:8000</code></div>
+          <div class="cmd"><div class="k">VS Code Live Server</div><code>Click "Go Live"</code></div>
+        </div>
+      </li>
+      <li>Go back to DevMirror and pull down to rescan. Your server appears under Live Servers.</li>
+    </ol>
+  </section>
+
+  <footer>DevMirror demo · served locally, nothing leaves your phone</footer>
+</main>
+
+<script>
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    $('host').textContent = location.host;
+
+    function breakpoint(w) {
+      if (w >= 1200) return 'xl';
+      if (w >= 900) return 'lg';
+      if (w >= 768) return 'md';
+      if (w >= 576) return 'sm';
+      return 'xs';
+    }
+
+    function update() {
+      var w = window.innerWidth, h = window.innerHeight;
+      var dpr = window.devicePixelRatio || 1;
+      $('vp').textContent = w + ' × ' + h;
+      $('dpr').textContent = (Math.round(dpr * 100) / 100) + 'x';
+      $('bp').textContent = breakpoint(w) + ' · ' + w + 'px';
+      $('orient').textContent = w > h ? 'landscape' : 'portrait';
+      $('scheme').textContent = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      $('touch').textContent = String(navigator.maxTouchPoints || 0);
+      $('ua').textContent = navigator.userAgent;
+    }
+
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
+    var schemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    if (schemeQuery.addEventListener) schemeQuery.addEventListener('change', update);
+
+    function formatUptime(ms) {
+      var s = Math.floor(ms / 1000);
+      var m = Math.floor(s / 60);
+      return m > 0 ? m + 'm ' + (s % 60) + 's' : s + 's';
+    }
+
+    var pingButton = $('ping'), pingResult = $('ping-result');
+    pingButton.addEventListener('click', function () {
+      var started = performance.now();
+      pingButton.disabled = true;
+      pingResult.className = '';
+      pingResult.textContent = 'Pinging…';
+      fetch('/api/ping', { cache: 'no-store' })
+        .then(function (res) {
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          var ms = Math.max(1, Math.round(performance.now() - started));
+          pingResult.className = 'ok';
+          pingResult.textContent = ms + ' ms · request #' + data.requests +
+            ' · server up ' + formatUptime(data.uptimeMs);
+        })
+        .catch(function (err) {
+          pingResult.textContent = 'Ping failed: ' + err.message;
+        })
+        .then(function () { pingButton.disabled = false; });
+    });
+  })();
+</script>
+</body>
+</html>

@@ -5,11 +5,13 @@ import 'package:url_launcher/url_launcher.dart' as launcher;
 import '../models/server_connection.dart';
 import '../services/browser_service.dart';
 import '../services/connection_storage_service.dart';
+import '../services/demo_server.dart';
 import '../services/network_discovery_service.dart';
 import '../services/reachability_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/scan_terminal.dart';
 import 'help_screen.dart';
+import 'webview_screen.dart';
 
 class ConnectScreen extends StatefulWidget {
   final ConnectionStorageService storageService;
@@ -50,6 +52,10 @@ class _ConnectScreenState extends State<ConnectScreen>
   bool _showScanLog = false;
   Timer? _scanLogHideTimer;
   DateTime _nextScanLogSlot = DateTime.now();
+
+  // Built-in demo site, for trying the app without a dev server on the network
+  final DemoServer _demoServer = DemoServer();
+  bool _isOpeningDemo = false;
 
   late final AnimationController _pulseController;
 
@@ -203,9 +209,54 @@ class _ConnectScreenState extends State<ConnectScreen>
     _scanLogNotifier.dispose();
     _scanLogHideTimer?.cancel();
     _scanSubscription?.cancel();
+    unawaited(_demoServer.stop());
     _ipController.dispose();
     _portController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openDemo() async {
+    if (_isOpeningDemo) return;
+    setState(() {
+      _isOpeningDemo = true;
+    });
+
+    try {
+      final port = await _demoServer.start();
+      if (!mounted) return;
+
+      // Not saved to recent servers: the demo gets a new port on every launch
+      final connection = ServerConnection(
+        id: 'demo',
+        label: 'DevMirror Demo',
+        ip: DemoServer.host,
+        port: port,
+        lastUsedAt: DateTime.now(),
+      );
+
+      // Opened in the built-in WebView, not Custom Tabs: the demo server runs
+      // in this app's process, which Android may freeze once Chrome is in front.
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => WebViewScreen(connection: connection),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text('Could not start the demo. Please try again.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isOpeningDemo = false;
+        });
+      }
+    }
   }
 
   void _toggleTheme() {
@@ -784,23 +835,69 @@ class _ConnectScreenState extends State<ConnectScreen>
               }),
             ] else if (!_isScanning) ...[
               Container(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
                 decoration: BoxDecoration(
                   color: cardBg,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: borderColor),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        'No dev servers found on this Wi-Fi.',
-                        style: TextStyle(fontSize: 13, color: mutedFg),
+                    const Text(
+                      'No dev servers found on this Wi-Fi.',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    TextButton(
-                      onPressed: _startLiveScan,
-                      child: const Text('Scan again'),
+                    const SizedBox(height: 4),
+                    Text(
+                      'No server running right now? Open the built-in demo '
+                      'site to see how DevMirror works.',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        height: 1.4,
+                        color: mutedFg,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          key: const ValueKey('try-demo'),
+                          onPressed: _isOpeningDemo ? null : _openDemo,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: fg,
+                            foregroundColor: isDark ? Colors.black : Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          icon: _isOpeningDemo
+                              ? SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: isDark ? Colors.black : Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.play_arrow_rounded, size: 18),
+                          label: const Text('Try demo'),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: _startLiveScan,
+                          child: const Text('Scan again'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
