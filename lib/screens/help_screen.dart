@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import 'onboarding_screen.dart';
 
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});
@@ -24,6 +25,18 @@ class HelpScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         children: [
+          // ── REPLAY THE FIRST-RUN TOUR ──
+          _buildTourCard(
+            context,
+            isDark: isDark,
+            fg: fg,
+            mutedFg: mutedFg,
+            cardBg: cardBg,
+            borderColor: borderColor,
+          ),
+
+          const SizedBox(height: 16),
+
           // ── OPTION 1: WIRELESS (RECOMMENDED) ──
           _buildMethodCard(
             context,
@@ -261,6 +274,77 @@ class HelpScreen extends StatelessWidget {
 
           const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTourCard(
+    BuildContext context, {
+    required bool isDark,
+    required Color fg,
+    required Color mutedFg,
+    required Color cardBg,
+    required Color borderColor,
+  }) {
+    return Material(
+      color: cardBg,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        key: const ValueKey('replay-tour'),
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (routeContext) => OnboardingScreen(
+              onFinish: () => Navigator.of(routeContext).pop(),
+            ),
+          ),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: fg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.slideshow_rounded,
+                  size: 18,
+                  color: isDark ? Colors.black : Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'New here? Take the quick tour',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'What DevMirror does and how to connect, in 5 short steps',
+                      style: TextStyle(fontSize: 12, color: mutedFg),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, size: 20, color: mutedFg),
+            ],
+          ),
+        ),
       ),
     );
   }

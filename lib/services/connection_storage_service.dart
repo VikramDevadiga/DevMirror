@@ -7,6 +7,7 @@ class ConnectionStorageService {
   static const String _connectionsKey = 'devmirror_saved_connections';
   static const String _lastUsedKey = 'devmirror_last_used_connection';
   static const String _themeModeKey = 'devmirror_theme_mode';
+  static const String _onboardingKey = 'devmirror_onboarding_complete';
 
   final SharedPreferences _prefs;
 
@@ -116,6 +117,13 @@ class ConnectionStorageService {
     if (modeStr == 'light') return ThemeMode.light;
     if (modeStr == 'dark') return ThemeMode.dark;
     return ThemeMode.system;
+  }
+
+  /// Whether the first-run tour has been finished or skipped
+  bool hasCompletedOnboarding() => _prefs.getBool(_onboardingKey) ?? false;
+
+  Future<void> setOnboardingCompleted() async {
+    await _prefs.setBool(_onboardingKey, true);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/connect_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'services/connection_storage_service.dart';
 import 'theme/app_theme.dart';
 
@@ -23,11 +24,20 @@ class DevMirrorApp extends StatefulWidget {
 
 class _DevMirrorAppState extends State<DevMirrorApp> {
   late ThemeMode _themeMode;
+  late bool _showOnboarding;
 
   @override
   void initState() {
     super.initState();
     _themeMode = widget.storageService.getThemeMode();
+    _showOnboarding = !widget.storageService.hasCompletedOnboarding();
+  }
+
+  void _completeOnboarding() {
+    setState(() {
+      _showOnboarding = false;
+    });
+    widget.storageService.setOnboardingCompleted();
   }
 
   void _updateThemeMode(ThemeMode mode) {
@@ -45,10 +55,21 @@ class _DevMirrorAppState extends State<DevMirrorApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
-      home: ConnectScreen(
-        storageService: widget.storageService,
-        onThemeModeChanged: _updateThemeMode,
-        currentThemeMode: _themeMode,
+      // First launch shows the tour; the connect screen (and its network
+      // scan) only starts once the tour is finished or skipped.
+      home: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 350),
+        child: _showOnboarding
+            ? OnboardingScreen(
+                key: const ValueKey('onboarding'),
+                onFinish: _completeOnboarding,
+              )
+            : ConnectScreen(
+                key: const ValueKey('connect'),
+                storageService: widget.storageService,
+                onThemeModeChanged: _updateThemeMode,
+                currentThemeMode: _themeMode,
+              ),
       ),
     );
   }
